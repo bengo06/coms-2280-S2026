@@ -58,5 +58,12 @@ public class StoutListMain {
 
         jamesI.set(1);
         System.out.println(james.toStringInternal(jamesI));
+
+        System.out.println(james.get(2));
+
+        james.add(5, 12);
+        System.out.println(james.toStringInternal());
+
+
     }
 }
