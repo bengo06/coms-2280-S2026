@@ -93,10 +93,37 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
   {
     if (item == null) throw new NullPointerException();
 
-    else {
-        
+    if (size == 0)
+    {
+        Node newNode = new Node();
+        newNode.addItem(item);
+        head.next = newNode;
+        newNode.previous = head;
+        tail.previous = newNode;
+        newNode.next = tail;
     }
 
+    else
+    {
+        if (tail.previous.count < nodeSize)
+        {
+            tail.previous.addItem(item);
+        }
+
+        else
+        {
+            Node newNode = new Node();
+            newNode.addItem(item);
+            Node temp = tail.previous;
+            temp.next = newNode;
+            newNode.previous = temp;
+            tail.previous = newNode;
+            newNode.next = tail;
+        }
+
+    }
+
+    size++;
     return true;
   }
 
@@ -315,6 +342,42 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     }    
   }
 
+  private class NodeInfo
+  {
+      public Node node;
+      public int offset;
+
+      public NodeInfo(Node n, int o)
+      {
+          this.node = n;
+          this.offset = o;
+      }
+
+      private NodeInfo find(int pos)
+      {
+          Node n = head.next;
+          int count = 0;
+
+          while (n != tail)
+          {
+              for (int i = 0; i < nodeSize; i++)
+              {
+                  if (n.data[i] != null)
+                  {
+                      if (count == pos)
+                      {
+                          return new NodeInfo(n, i);
+                      }
+                      count++;
+                  }
+              }
+              n = n.next;
+          }
+
+          return null;
+      }
+  }
+
   private class StoutListIterator implements ListIterator<E>
   {
 
@@ -337,8 +400,8 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
      */
     public StoutListIterator(int pos)
     {
-        cursor = pos;
-        lastPos = cursor - 1;
+        this.cursor = pos;
+        this.lastPos = cursor - 1;
         dataInit();
     }
 
@@ -347,18 +410,18 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
         data = (E[]) new Comparable[size];
 
         Node focus = head.next;
-        int nodeI = 0;
+        int j = 0;
         while (focus != tail)
         {
             for (int i = 0; i < focus.count; i++) {
-                focus.data[nodeI++] = data[i];
+                data[j++] = focus.data[i];
             }
             focus = focus.next;
         }
     }
 
     @Override
-    public boolean hasNext() { return cursor < data.length - 1; }
+    public boolean hasNext() { return cursor < size; }
 
     @Override
     public E next()
@@ -367,8 +430,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
         else
         {
             lastPos = cursor;
-            cursor++;
-            return data[lastPos];
+            return data[cursor++];
         }
     }
 
@@ -388,8 +450,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
         else
         {
             lastPos = cursor;
-            cursor--;
-            return data[lastPos];
+            return data[--cursor];
         }
     }
 
@@ -414,7 +475,26 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     @Override
     public void set(E item)
     {
-        // TODO
+        if (cursor - lastPos < 0)
+        {
+            NodeInfo nI = new NodeInfo(null, 0);
+            nI = nI.find(cursor);
+            nI.node.data[nI.offset] = item;
+            data[cursor] = item;
+        }
+
+        else if (cursor - lastPos >= 0)
+        {
+            NodeInfo nI = new NodeInfo(null, 0);
+            nI = nI.find(lastPos);
+            nI.node.data[nI.offset] = item;
+            data[lastPos] = item;
+        }
+
+        else
+        {
+            throw new IllegalArgumentException();
+        }
     }
     // Other methods you may want to add or override that could possibly facilitate 
     // other operations, for instance, addition, access to the previous element, etc.
