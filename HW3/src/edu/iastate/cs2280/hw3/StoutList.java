@@ -10,8 +10,6 @@ import java.util.NoSuchElementException;
 
 /**
  * whats left TODO
- * - fix find method to fix the error with out of bounds
- * - implement standard remove per guidelines
  * - complete StoutListIterator class (add, remove)
  * - figure out sorting and flow/algorithms
  * - test and polish
@@ -187,8 +185,8 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
         n.count = nodeSize / 2;
         newNode.count = nodeSize - (nodeSize / 2);
 
-        if (off <= nodeSize / 2 ) { n.addItem(off, item); }
-        else if (off > nodeSize / 2) { newNode.addItem(off - (nodeSize / 2), item); }
+        if (off <= nodeSize / 2 ) n.addItem(off, item);
+        else if (off > nodeSize / 2) newNode.addItem(off - (nodeSize / 2), item);
 
         size++;
         return;
@@ -198,8 +196,38 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
   @Override
   public E remove(int pos)
   {
+    if (pos < 0 || pos > size) throw new IndexOutOfBoundsException();
 
-    return null;
+    NodeInfo nI = find(pos);
+    Node n = nI.node;
+    int off = nI.offset;
+    E ret = n.data[off];
+
+    if (n == tail.previous && n.count == 1) { n.previous.next = tail; tail.previous = n.previous; return ret; }
+
+    if (n == tail.previous || n.count > nodeSize / 2) { n.removeItem(off); return ret; }
+
+    else
+    {
+        if (n.next.count > nodeSize / 2)
+        {
+            n.addItem(n.next.data[0]);
+            n.next.removeItem(0);
+        }
+
+        if (n.next.count <= nodeSize / 2)
+        {
+            for (int i = 0; i < n.next.count; i++)
+            {
+                n.addItem(n.next.data[i]);
+            }
+
+            n.next = n.next.next;
+            n.next.next.previous = n;
+        }
+
+        return ret;
+    }
   }
 
   /**
@@ -416,11 +444,21 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
 
   private NodeInfo find(int pos)
   {
+      if (pos < 0) return new NodeInfo(head, 0);
+      if (pos >= size) return new NodeInfo(tail, 0);
+
       Node n = head.next;
       int count = 0;
 
       while (n != tail)
       {
+          if (count + n.count <= pos)
+          {
+              count += n.count;
+              n = n.next;
+          }
+
+          return new NodeInfo(n, pos - count);
 
       }
 
@@ -475,6 +513,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     @Override
     public E next()
     {
+        dataInit();
         if (!hasNext()) throw new NoSuchElementException();
         else
         {
@@ -495,6 +534,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     @Override
     public E previous()
     {
+        dataInit();
         if (!hasPrevious()) throw new NoSuchElementException();
         else
         {
@@ -524,6 +564,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     @Override
     public void set(E item)
     {
+        dataInit();
         if (cursor - lastPos < 0)
         {
             NodeInfo nI = find(cursor);

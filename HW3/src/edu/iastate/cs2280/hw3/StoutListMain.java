@@ -61,7 +61,21 @@ public class StoutListMain {
 
         System.out.println(james.get(2));
 
-        james.add(5, 12);
+        System.out.println(james.toStringInternal());
+
+        james.set(3, 7);
+        System.out.println(james.toStringInternal());
+
+        james.add(4, 8);
+        System.out.println(james.toStringInternal());
+
+        james.set(5, 9);
+        System.out.println(james.toStringInternal());
+
+        System.out.println(james.remove(5));
+        System.out.println(james.toStringInternal());
+
+        System.out.println(james.remove(4));
         System.out.println(james.toStringInternal());
 
 
