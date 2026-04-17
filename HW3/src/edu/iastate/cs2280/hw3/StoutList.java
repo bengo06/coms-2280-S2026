@@ -10,7 +10,6 @@ import java.util.NoSuchElementException;
 
 /**
  * whats left TODO
- * - figure out sorting and flow/algorithms
  * - test and polish
  * - junit?
  */
@@ -269,14 +268,33 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
       });
 
       int count = 0;
+      n = head;
+      Node no = new Node();
+      n.next = no;
+      no.previous = n;
+      n = no;
       while (count < vals.length)
       {
-          n.next = new Node();
           for (int i = 0; i < nodeSize; i++)
           {
+            n.addItem(vals[count++]);
+            if (vals.length == count) break;
+          }
 
+          if (vals.length != count)
+          {
+              no = new Node();
+              n.next = no;
+              no.previous = n;
+              n = no;
           }
       }
+
+      n.next = tail;
+      tail.previous = n;
+
+      n.count = vals.length;
+      size = vals.length;
   }
   
   /**
@@ -285,9 +303,55 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
    *  
    * Comparable<? super E> must be implemented for calling bubbleSort(). 
    */
-  public void sortReverse() 
+  public void sortReverse()
   {
-	  // TODO
+      Node n = head.next;
+      E[] vals = (E[]) new Comparable[size];
+      int j = 0;
+      while (n != tail) {
+          for (int i = 0; i < nodeSize; i++)
+          {
+              if (n.data[i] != null)
+              {
+                  vals[j++] = n.data[i];
+              }
+          }
+          n = n.next;
+      }
+
+      head.next = tail;
+      tail.previous = head;
+
+      bubbleSort(vals);
+
+      int count = 0;
+      n = head;
+      Node no = new Node();
+      n.next = no;
+      no.previous = n;
+      n = no;
+      while (count < vals.length)
+      {
+          for (int i = 0; i < nodeSize; i++)
+          {
+              n.addItem(vals[count++]);
+              if (vals.length == count) break;
+          }
+
+          if (vals.length != count)
+          {
+              no = new Node();
+              n.next = no;
+              no.previous = n;
+              n = no;
+          }
+      }
+
+      n.next = tail;
+      tail.previous = n;
+
+      n.count = vals.length;
+      size = vals.length;
   }
   
   @Override
@@ -608,11 +672,6 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
         nI.node.data[nI.offset] = item;
         dataInit();
     }
-    // Other methods you may want to add or override that could possibly facilitate 
-    // other operations, for instance, addition, access to the previous element, etc.
-    // 
-    // ...
-    // 
   }
   
 
@@ -646,8 +705,22 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
    */
   private void bubbleSort(E[] arr)
   {
-	  // TODO
-  }
- 
+      boolean swapped = false;
 
+      for (int i = 0; i < arr.length - 1; i++)
+      {
+          if (arr[i].compareTo(arr[i + 1]) < 0)
+          {
+              E temp = arr[i];
+              arr[i] = arr[i + 1];
+              arr[i + 1] = temp;
+              swapped = true;
+          }
+      }
+
+      if (swapped)
+      {
+          bubbleSort(arr);
+      }
+  }
 }

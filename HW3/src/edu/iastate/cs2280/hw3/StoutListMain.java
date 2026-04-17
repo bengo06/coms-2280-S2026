@@ -44,8 +44,10 @@ public class StoutListMain {
         System.out.println(james.toStringInternal());
 
         james.sort();
+        System.out.println(james.toStringInternal());
 
-
+        james.sortReverse();
+        System.out.println(james.toStringInternal());
 
     }
 }
