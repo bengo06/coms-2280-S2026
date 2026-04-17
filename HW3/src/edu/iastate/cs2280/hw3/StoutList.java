@@ -10,7 +10,6 @@ import java.util.NoSuchElementException;
 
 /**
  * whats left TODO
- * - complete StoutListIterator class (add, remove)
  * - figure out sorting and flow/algorithms
  * - test and polish
  * - junit?
@@ -151,7 +150,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
 
     if (off == 0)
     {
-        if (n.previous != head && n.previous.count < nodeSize) { n.previous.addItem(item); return; }
+        if (n.previous != head && n.previous.count < nodeSize) { n.previous.addItem(item); size++; return; }
         else if (n == tail && n.previous.count == nodeSize)
         {
             Node newNode = new Node();
@@ -196,36 +195,39 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
   @Override
   public E remove(int pos)
   {
-    if (pos < 0 || pos > size) throw new IndexOutOfBoundsException();
+    if (pos < 0 || pos >= size) throw new IndexOutOfBoundsException();
 
     NodeInfo nI = find(pos);
     Node n = nI.node;
     int off = nI.offset;
     E ret = n.data[off];
 
-    if (n == tail.previous && n.count == 1) { n.previous.next = tail; tail.previous = n.previous; return ret; }
+    if (n == tail.previous && n.count == 1) { n.previous.next = tail; tail.previous = n.previous; size--; return ret; }
 
-    if (n == tail.previous || n.count > nodeSize / 2) { n.removeItem(off); return ret; }
+    if (n == tail.previous || n.count > nodeSize / 2) { n.removeItem(off); size--; return ret; }
 
     else
     {
         if (n.next.count > nodeSize / 2)
         {
+            n.removeItem(off);
             n.addItem(n.next.data[0]);
             n.next.removeItem(0);
         }
 
-        if (n.next.count <= nodeSize / 2)
+        else if (n.next.count <= nodeSize / 2)
         {
+            n.removeItem(off);
             for (int i = 0; i < n.next.count; i++)
             {
                 n.addItem(n.next.data[i]);
             }
-
-            n.next = n.next.next;
-            n.next.next.previous = n;
+            Node temp = n.next.next;
+            n.next = temp;
+            temp.previous = n;
         }
 
+        size--;
         return ret;
     }
   }
@@ -242,7 +244,39 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
    */
   public void sort()
   {
-	  // TODO 
+      Node n = head.next;
+      E[] vals = (E[]) new Comparable[size];
+      int j = 0;
+      while (n != tail) {
+          for (int i = 0; i < nodeSize; i++)
+          {
+              if (n.data[i] != null)
+              {
+                  vals[j++] = n.data[i];
+              }
+          }
+          n = n.next;
+      }
+
+      head.next = tail;
+      tail.previous = head;
+
+      insertionSort(vals, new Comparator<E>() {
+          @Override
+          public int compare(E o1, E o2) {
+              return o1.compareTo(o2);
+          }
+      });
+
+      int count = 0;
+      while (count < vals.length)
+      {
+          n.next = new Node();
+          for (int i = 0; i < nodeSize; i++)
+          {
+
+          }
+      }
   }
   
   /**
@@ -436,7 +470,8 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
       public Node node;
       public int offset;
 
-      public NodeInfo(Node n, int o) {
+      public NodeInfo(Node n, int o)
+      {
           this.node = n;
           this.offset = o;
       }
@@ -452,16 +487,14 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
 
       while (n != tail)
       {
-          if (count + n.count <= pos)
+          if (count + n.count > pos)
           {
-              count += n.count;
-              n = n.next;
+              return new NodeInfo(n, pos - count);
           }
 
-          return new NodeInfo(n, pos - count);
-
+          count += n.count;
+          n = n.next;
       }
-
       return null;
   }
 
@@ -488,7 +521,7 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     public StoutListIterator(int pos)
     {
         this.cursor = pos;
-        this.lastPos = cursor - 1;
+        this.lastPos = -1;
         dataInit();
     }
 
@@ -515,11 +548,9 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     {
         dataInit();
         if (!hasNext()) throw new NoSuchElementException();
-        else
-        {
-            lastPos = cursor;
-            return data[cursor++];
-        }
+
+        lastPos = cursor;
+        return data[cursor++];
     }
 
     @Override
@@ -536,11 +567,9 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     {
         dataInit();
         if (!hasPrevious()) throw new NoSuchElementException();
-        else
-        {
-            lastPos = cursor;
-            return data[--cursor];
-        }
+
+        lastPos = --cursor;
+        return data[cursor];
     }
 
     @Override
@@ -552,37 +581,32 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
     @Override
     public void add(E item)
     {
-        // TODO
+        if (item == null) throw new NullPointerException();
+
+        StoutList.this.add(cursor++, item);
+        dataInit();
     }
 
     @Override
     public void remove()
     {
-    	// TODO 
+        if (lastPos == -1) throw new IllegalStateException();
+
+        StoutList.this.remove(lastPos);
+
+        if (lastPos < cursor) cursor--;
+        lastPos = -1;
+        dataInit();
     }
 
     @Override
     public void set(E item)
     {
+        if (lastPos == -1) throw new IllegalStateException();
+
+        NodeInfo nI = find(lastPos);
+        nI.node.data[nI.offset] = item;
         dataInit();
-        if (cursor - lastPos < 0)
-        {
-            NodeInfo nI = find(cursor);
-            nI.node.data[nI.offset] = item;
-            data[cursor] = item;
-        }
-
-        else if (cursor - lastPos >= 0)
-        {
-            NodeInfo nI = find(lastPos);
-            nI.node.data[nI.offset] = item;
-            data[lastPos] = item;
-        }
-
-        else
-        {
-            throw new IllegalArgumentException();
-        }
     }
     // Other methods you may want to add or override that could possibly facilitate 
     // other operations, for instance, addition, access to the previous element, etc.
@@ -599,7 +623,18 @@ public class StoutList<E extends Comparable<? super E>> extends AbstractSequenti
    */
   private void insertionSort(E[] arr, Comparator<? super E> comp)
   {
-	  // TODO
+	  for (int i = 1; i < arr.length; i++)
+      {
+          E focus = arr[i];
+          int j = i - 1;
+
+          while (j >= 0 && comp.compare(arr[j], focus) >= 0)
+          {
+              arr[j + 1] = arr[j];
+              j--;
+          }
+          arr[j + 1] = focus;
+      }
   }
   
   /**
