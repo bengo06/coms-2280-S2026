@@ -6,11 +6,17 @@ package edu.iastate.cs2280.hw4;
 
 public class MsgTree {
 
-    public char payload;
-    public MsgTree left;
-    public MsgTree right;
-    private static int charIdx = 0;
+    public char payload; // value of a given node
+    public MsgTree left; // left node in the MsgTree
+    public MsgTree right; // right node in the MsgTree
+    private static int charIdx = 0; // used to keep track of the position in string to build the tree
 
+    /**
+     * Recursively builds a message tree based
+     * on the encoding string read from a file
+     *
+     * @param key Encoding string read in from file
+     */
     public MsgTree(String key) {
         if (charIdx >= key.length()) { return; }
 
@@ -23,12 +29,26 @@ public class MsgTree {
         }
     }
 
+    /**
+     * Builds a single node of the MsgTree,
+     * has no right or left
+     *
+     * @param payload char value of node
+     */
     public MsgTree(char payload) {
         this.payload = payload;
         this.right = null;
         this.left = null;
     }
 
+    /**
+     * Decodes the message tree based on the binary
+     * path string from the file. A 0 from the string
+     * represents left and 1 represents right
+     *
+     * @param tree MsgTree built from encoding string
+     * @param msg binary path string from file
+     */
     public static void decode(MsgTree tree, String msg) {
         MsgTree treeCopy = tree;
         String decoded = "";
@@ -51,6 +71,13 @@ public class MsgTree {
         System.out.println("Message:\n" + decoded + "\n");
     }
 
+    /**
+     * Searches MsgTree and finds the binary path to each character.
+     * 0 represents left, 1 represents right
+     *
+     * @param tree MsgTree built from encoding string
+     * @param code empty string to build path for each character
+     */
     public static void printCodes(MsgTree tree, String code) {
         if (tree == null) { return; }
 
@@ -69,7 +96,5 @@ public class MsgTree {
 
         printCodes(tree.left, code + '0');
         printCodes(tree.right, code + '1');
-
-
     }
 }
